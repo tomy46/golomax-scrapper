@@ -6,10 +6,13 @@ from scraper import init_driver, scrape_best_product
 
 st.title("🛒 Calculador de Precios Golomax")
 
-uploaded_file = st.file_uploader("📤 Sube tu archivo CSV de productos", type=["csv"])
+uploaded_file = st.file_uploader("📤 Sube tu archivo CSV de productos",
+                                 type=["csv"])
 
 if uploaded_file:
-    st.info("Procesando archivo... puede tardar unos minutos según la cantidad de productos.")
+    st.info(
+        "Procesando archivo... puede tardar unos minutos según la cantidad de productos."
+    )
 
     df_in = pd.read_csv(uploaded_file)
     df_in.columns = df_in.columns.str.strip()
@@ -18,7 +21,7 @@ if uploaded_file:
         df_in = df_in.rename(columns={old0: "Cantidad", old1: "Nombre"})
 
     progress_placeholder = st.empty()  # Muestra la tabla parcial
-    logs_placeholder = st.empty()      # Muestra mensajes de progreso y errores
+    logs_placeholder = st.empty()  # Muestra mensajes de progreso y errores
 
     driver = init_driver()
     resultados = []
@@ -28,13 +31,15 @@ if uploaded_file:
             pedido = row["Cantidad"]
             termino = row["Nombre"]
             try:
-                nombre, precio_txt, precio_val, min_qty, link = scrape_best_product(driver, termino)
+                nombre, precio_txt, precio_val, min_qty, link = scrape_best_product(
+                    driver, termino)
                 logs_placeholder.info(f"✅ Producto encontrado: {nombre}")
             except Exception as e:
                 nombre, precio_txt, precio_val, min_qty, link = termino, "", 0.0, pedido, ""
                 logs_placeholder.warning(f"❌ Error buscando '{termino}': {e}")
 
-            qty_used = max(min_qty, ((pedido + min_qty - 1) // min_qty) * min_qty)
+            qty_used = max(min_qty,
+                           ((pedido + min_qty - 1) // min_qty) * min_qty)
             total = round(qty_used * precio_val, 2)
             resultados.append({
                 "Cantidad pedida": pedido,
@@ -54,7 +59,8 @@ if uploaded_file:
             if idx > 0 and idx % 20 == 0:
                 driver.quit()
                 driver = init_driver()
-                logs_placeholder.info("♻️ Reiniciando navegador para liberar memoria...")
+                logs_placeholder.info(
+                    "♻️ Reiniciando navegador para liberar memoria...")
 
     finally:
         driver.quit()
@@ -68,11 +74,9 @@ if uploaded_file:
         tmp_path = tmpfile.name
 
     with open(tmp_path, "rb") as f:
-        st.download_button(
-            label="⬇️ Descargar archivo CSV modificado",
-            data=f,
-            file_name="output.csv",
-            mime="text/csv"
-        )
+        st.download_button(label="⬇️ Descargar archivo CSV modificado",
+                           data=f,
+                           file_name="output.csv",
+                           mime="text/csv")
 
     os.remove(tmp_path)
