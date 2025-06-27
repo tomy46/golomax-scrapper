@@ -69,7 +69,7 @@ if uploaded_file:
     with open(tmp_path, "rb") as f:
         st.download_button(label="⬇️ Descargar archivo CSV modificado",
                            data=f,
-                           file_name="output.csv",
+                           file_name="Golomax.csv",
                            mime="text/csv")
 
     os.remove(tmp_path)
