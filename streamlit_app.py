@@ -13,24 +13,30 @@ if uploaded_file:
     st.info(
         "Procesando archivo... puede tardar unos minutos según la cantidad de productos."
     )
+
     df_in = pd.read_csv(uploaded_file)
     df_in.columns = df_in.columns.str.strip()
     if not set(["Cantidad", "Nombre"]).issubset(df_in.columns):
         old0, old1 = df_in.columns[0], df_in.columns[1]
         df_in = df_in.rename(columns={old0: "Cantidad", old1: "Nombre"})
 
+    progress_placeholder = st.empty()  # Muestra la tabla parcial
+    logs_placeholder = st.empty()  # Muestra mensajes de progreso y errores
+
     driver = init_driver()
     resultados = []
 
     try:
-        for _, row in df_in.iterrows():
+        for idx, row in df_in.iterrows():
             pedido = row["Cantidad"]
             termino = row["Nombre"]
             try:
                 nombre, precio_txt, precio_val, min_qty, link = scrape_best_product(
                     driver, termino)
+                logs_placeholder.info(f"✅ Producto encontrado: {nombre}")
             except Exception as e:
                 nombre, precio_txt, precio_val, min_qty, link = termino, "", 0.0, pedido, ""
+                logs_placeholder.warning(f"❌ Error buscando '{termino}': {e}")
 
             qty_used = max(min_qty,
                            ((pedido + min_qty - 1) // min_qty) * min_qty)
@@ -44,12 +50,16 @@ if uploaded_file:
                 "Precio total": total,
                 "Link": link
             })
+
+            # Actualiza la tabla parcial en cada iteración
+            df_partial = pd.DataFrame(resultados)
+            progress_placeholder.dataframe(df_partial)
+
     finally:
         driver.quit()
 
     df_out = pd.DataFrame(resultados)
     st.success(f"✅ Procesamiento finalizado. {len(df_out)} filas procesadas.")
-    st.dataframe(df_out)
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmpfile:
         df_out.to_csv(tmpfile.name, index=False, encoding="utf-8-sig")
