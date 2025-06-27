@@ -1,4 +1,4 @@
-entrypoint = "main.py"
+entrypoint = "streamlit_app.py"
 modules = ["python-3.11"]
 
 [nix]
@@ -11,6 +11,14 @@ language = "python3"
 [gitHubImport]
 requiredFiles = [".replit", "replit.nix"]
 
+[run]
+command = "streamlit run streamlit_app.py"
+
+
 [deployment]
-run = ["python3", "streamlit_app.py"]
+run = ["streamlit", "run", "streamlit_app.py"]
 deploymentTarget = "cloudrun"
+
+[[ports]]
+localPort = 8501
+externalPort = 80
